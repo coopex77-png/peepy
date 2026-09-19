@@ -3,17 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>PEEPY</title>
+<title>PEPE</title>
 <meta name="description" content="A frog whose length is the market cap. Live.">
-<meta property="og:title" content="PEEPY">
-<meta property="og:url" content="https://peepy.online/">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PEEPY">
-<meta name="twitter:description" content="A frog whose length is the market cap. Live.">
+<meta property="og:title" content="PEPE">
 <meta property="og:description" content="A frog whose length is the market cap. Live.">
 <meta name="theme-color" content="#08080a">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%90%B8%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -95,9 +90,6 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
   #bar .ca{grid-column:1/-1}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-/* ?shot — clean render for images: white studio, no chrome */
-html.shot,html.shot body{background:#fff}
-html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{display:none!important}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script src="config.js"></script>
@@ -109,7 +101,7 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
 <div id="vig"></div><div id="grain"></div>
 
 <header class="ui" id="head">
-  <div class="brand"><h1 data-name>peepy</h1><span class="dot"></span><small data-src>live</small></div>
+  <div class="brand"><h1 data-name>Pepe</h1><span class="dot"></span><small data-src>live</small></div>
   <div class="right"><span class="lbl">Market cap</span><span class="v" data-mc>—</span></div>
 </header>
 
@@ -127,10 +119,10 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
   <div class="cell"><span class="lbl">24h</span><b data-chg>—</b></div>
   <div class="cell"><span class="lbl">Volume 24h</span><b data-vol>—</b></div>
   <div class="cell ca"><div style="display:grid;gap:6px;min-width:0"><span class="lbl">Contract</span><code data-ca title="Copy">not set</code></div></div>
-  <a class="buy" data-buy target="_blank" rel="noopener">Buy $PEEPY</a>
+  <a class="buy" data-buy target="_blank" rel="noopener">Buy $PEPE</a>
 </footer>
 
-<div id="boot"><div data-bootname>peepy</div></div>
+<div id="boot"><div data-bootname>Pepe</div></div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -144,8 +136,6 @@ const CFG = window.PEPE_CONFIG || {}, qs = new URLSearchParams(location.search);
 const MINT = (qs.get('ca') || CFG.mint || '').trim();
 const CHAIN = CFG.chain || 'solana';
 const DEMO = !MINT || qs.has('demo');
-// ?shot renders a clean still: white background, fixed camera. ?yaw= (deg, 0 = facing camera), ?pitch=, ?dist=, ?mc=
-const SHOT = qs.has('shot'); if (SHOT) document.documentElement.classList.add('shot');
 const BUY = CFG.buy || (MINT ? 'https://pump.fun/coin/' + MINT : 'https://pump.fun');
 const NAME = CFG.name || 'Pepe', TICKER = CFG.ticker || 'PEPE';
 
@@ -165,14 +155,14 @@ if (MINT) { const c = $('[data-ca]'); c.textContent = MINT.slice(0, 6) + '…' +
 
 /* ---------- studio ---------- */
 const canvas = $('#gl');
-const renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: SHOT, alpha: SHOT});
+const renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .82;
 const scene = new THREE.Scene();
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-if (SHOT) { scene.background = new THREE.Color(0xffffff); renderer.toneMappingExposure = .95; } else scene.fog = new THREE.Fog(0x08080a, 16, 46);
+scene.fog = new THREE.Fog(0x08080a, 16, 46);
 
 const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 400);
 const controls = new OrbitControls(camera, canvas);
@@ -200,7 +190,6 @@ const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshSt
 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
 const pool = new THREE.Mesh(new THREE.CircleGeometry(13, 64), new THREE.MeshBasicMaterial({map: floorTex, transparent: true, opacity: .34, blending: THREE.AdditiveBlending, depthWrite: false}));
 pool.rotation.x = -Math.PI / 2; pool.position.y = .002; scene.add(pool);
-if (SHOT) { pool.visible = false; floor.material = new THREE.ShadowMaterial({opacity: .1}); Object.assign(controls, {autoRotate: false, enabled: false}); }
 
 const pivot = new THREE.Group(); scene.add(pivot);
 const ground = 0;
@@ -244,9 +233,9 @@ const buildPepe = () => {
   // sleeves out the front, a little green hand at the end of each
   rig.arms = [];
   for (const s of [-1, 1]) {
-    const a = new THREE.Group(); a.position.set(s * 1.12, 1.45, .2); a.rotation.z = s * -.1; p.add(a); rig.arms.push(a);
-    a.add(mesh(new THREE.CapsuleGeometry(.21, .6, 6, 14), hoodie, 0, -.32, 0));
-    const h = mesh(new THREE.SphereGeometry(1, 14, 10), skin, 0, -.72, .02); h.scale.set(.19, .16, .23); a.add(h);
+    const a = new THREE.Group(); a.position.set(s * 1.0, 1.2, .72); a.rotation.x = -1.05; a.rotation.z = s * -.18; p.add(a); rig.arms.push(a);
+    a.add(mesh(new THREE.CapsuleGeometry(.21, .55, 6, 14), hoodie, 0, -.3, 0));
+    const h = mesh(new THREE.SphereGeometry(1, 14, 10), skin, 0, -.66, 0); h.scale.set(.2, .14, .24); a.add(h);
   }
   // where the member attaches: low on the front of the hoodie, centre line
   rig.anchor = new THREE.Object3D(); rig.anchor.position.set(0, .48, 1.0); p.add(rig.anchor);
@@ -266,7 +255,7 @@ const ends = {base: new THREE.Vector3(), tip: new THREE.Vector3()}, tmp = new TH
 const updateMember = t => {
   if (!ready) return;
   const b = pivot.worldToLocal(rig.anchor.getWorldPosition(tmp)).clone();
-  const L = shownCm * CM, r = .06 + Math.min(.21, L * .065);
+  const L = shownCm * CM, r = .04 + Math.min(.17, L * .05);
   const bounce = Math.sin(t * 8.4) * .05 * Math.min(L, 4);
   const dir = new THREE.Vector3(0, -.35, 1).normalize();    // out the front, dipping
   const sag = Math.pow(L, 1.35) * .18 + bounce;
@@ -283,7 +272,7 @@ const updateMember = t => {
 };
 
 // Idle: a little bob, the occasional slow blink, sleeves twitching. No skeleton needed.
-const blinkAt = t => { if (SHOT) return 0; const c = t % 4.7; return c < .3 ? Math.sin(c / .3 * Math.PI) : 0; };
+const blinkAt = t => { const c = t % 4.7; return c < .3 ? Math.sin(c / .3 * Math.PI) : 0; };
 const idle = t => {
   if (!rig.root) return;
   const br = Math.sin(t * 1.5);
@@ -291,17 +280,11 @@ const idle = t => {
   rig.body.scale.set(1 + br * .012, 1 + br * .02, 1 + br * .012);
   rig.head.position.y = 2.12 + br * .025; rig.head.rotation.z = Math.sin(t * .6) * .03; rig.head.rotation.y = Math.sin(t * .4) * .05;
   const bl = blinkAt(t); for (const l of rig.lids) l.rotation.x = -.55 + bl * 1.5;
-  rig.arms.forEach((a, i) => { a.rotation.x = Math.sin(t * 1.5 + i * 2) * .05; a.rotation.z = (i ? 1 : -1) * -.1 + Math.sin(t * 1.1 + i) * .02; });
+  rig.arms.forEach((a, i) => { a.rotation.z = (i ? 1 : -1) * -.18 + Math.sin(t * 1.5 + i * 2) * .06; });
 };
 
 // Camera pulls back as it grows so the whole thing stays in frame.
 const frame = () => {
-  if (SHOT) {
-    const yaw = THREE.MathUtils.degToRad(+(qs.get('yaw') ?? -68)), pitch = THREE.MathUtils.degToRad(+(qs.get('pitch') ?? 14)), d = +(qs.get('dist') ?? 8.2);
-    controls.target.set(0, 1.3, 0);
-    camera.position.set(Math.sin(yaw) * Math.cos(pitch) * d, 1.3 + Math.sin(pitch) * d, Math.cos(yaw) * Math.cos(pitch) * d);
-    camera.lookAt(controls.target); rim.target.position.copy(controls.target); return;
-  }
   const L = shownCm * CM, span = Math.max(6.2, 5.0 + L * 1.06);
   const want = span / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * (camera.aspect < 1 ? 1.2 / camera.aspect : 1) * .92;
   const d = camera.position.distanceTo(controls.target);
@@ -332,7 +315,6 @@ const paintRule = () => {
 
 const clock = new THREE.Clock(), t0 = performance.now();
 let mixer = null;
-window.__png = () => canvas.toDataURL('image/png');
 const loop = () => {
   const dt = Math.min(clock.getDelta(), .05), t = (performance.now() - t0) / 1000;
   if (mixer) mixer.update(dt);
@@ -355,19 +337,14 @@ const begin = () => {
 
 /* ---------- market ---------- */
 const state = {mc: 0, best: 0, log: []};
-// DexScreener allows 300 req/min on the token endpoints, so 2 s polling is comfortable. GeckoTerminal (~30/min) is only a
-// fallback and is never asked more than once every 10 s. Polling pauses while the tab is hidden and backs off after errors.
-let geckoAt = 0;
 const fetchMarket = async () => {
   try {
-    const a = await (await fetch('https://api.dexscreener.com/tokens/v1/' + CHAIN + '/' + MINT, {cache: 'no-store'})).json();
+    const a = await (await fetch('https://api.dexscreener.com/tokens/v1/' + CHAIN + '/' + MINT)).json();
     if (Array.isArray(a) && a.length) {
       const p = a.sort((x, y) => (y.liquidity?.usd || 0) - (x.liquidity?.usd || 0))[0];
       return {mc: +(p.marketCap || p.fdv), price: +p.priceUsd, vol: p.volume?.h24, chg: p.priceChange?.h24, src: 'live'};
     }
   } catch (e) {}
-  if (Date.now() - geckoAt < 10000) return null;
-  geckoAt = Date.now();
   try {
     const net = CHAIN === 'ethereum' ? 'eth' : CHAIN;
     const a = (await (await fetch('https://api.geckoterminal.com/api/v2/networks/' + net + '/tokens/' + MINT)).json()).data.attributes;
@@ -396,10 +373,10 @@ const tick = async () => {
     const d = $('.brand .dot'); d.style.background = '#e8b45f'; d.style.boxShadow = '0 0 10px #e8b45f';
     return;
   }
-  const m = (DEMO || PREVIEW) ? fakeMarket() : await fetchMarket();   // ?mc= always wins, even with a live mint
+  const m = DEMO ? fakeMarket() : await fetchMarket();
   if (!m || !(m.mc > 0)) { $('[data-note]').textContent = MINT ? 'waiting for the first trade' : 'not launched yet'; return; }
   const prev = state.mc; state.mc = m.mc;
-  const cm = cmFor(m.mc); targetCm = cm; if (SHOT) shownCm = cm;
+  const cm = cmFor(m.mc); targetCm = cm;
   const record = cm > state.best; state.best = Math.max(state.best, cm);
   $('[data-len]').textContent = fmtCm(cm);
   $('[data-inch]').textContent = (cm / 2.54).toFixed(1) + ' in';
@@ -409,9 +386,9 @@ const tick = async () => {
   $('[data-chg]').innerHTML = m.chg == null ? '—' : `<span style="color:${m.chg >= 0 ? 'var(--up)' : 'var(--down)'}">${m.chg >= 0 ? '+' : ''}${(+m.chg).toFixed(1)}%</span>`;
   $('[data-src]').textContent = m.src;
   const dot = $('.brand .dot'); dot.style.background = dot.style.boxShadow = '';
-  if (DEMO || PREVIEW) { dot.style.background = '#e8b45f'; dot.style.boxShadow = '0 0 10px #e8b45f'; }
+  if (DEMO) { dot.style.background = '#e8b45f'; dot.style.boxShadow = '0 0 10px #e8b45f'; }
   const ch = prev ? m.mc / prev - 1 : 0;
-  $('[data-note]').textContent = PREVIEW ? 'preview' : DEMO ? 'not launched yet' : record && prev ? 'new high' : ch > .01 ? 'growing' : ch < -.01 ? 'receding' : 'holding';
+  $('[data-note]').textContent = DEMO ? 'preview' : record && prev ? 'new high' : ch > .01 ? 'growing' : ch < -.01 ? 'receding' : 'holding';
   const d = $('[data-delta]');
   if (prev && Math.abs(ch) > .01) {
     d.textContent = (ch > 0 ? '+' : '') + (ch * 100).toFixed(1) + '%';
@@ -420,20 +397,10 @@ const tick = async () => {
     if (Math.abs(ch) > .06) pushLog(`${fmtCm(cmFor(prev))} → <b style="color:${ch > 0 ? 'var(--up)' : 'var(--down)'}">${fmtCm(cm)}</b>`);
   }
 };
-const POLL = 2000;
-let fails = 0, timer = 0;
-const schedule = ms => { clearTimeout(timer); timer = setTimeout(poll, ms); };
-const poll = async () => {
-  if (document.hidden) return schedule(1000);
-  const before = state.mc;
-  await tick();
-  fails = state.mc === before && !(state.mc > 0) ? Math.min(fails + 1, 5) : 0;
-  schedule(POLL * (1 + fails));                                            // 2 s normally, up to 12 s while the API is failing
-};
 const start = () => {
-  if (DEMO || PREVIEW) { tick(); }
-  else { poll(); document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(0); }); }
-  pushLog(PREVIEW ? 'preview mode' : DEMO ? 'waiting for launch' : 'measurement started');
+  tick();
+  if (!DEMO) setInterval(tick, 5000);
+  pushLog(DEMO ? (PREVIEW ? 'preview mode' : 'waiting for launch') : 'measurement started');
 };
 if (CFG.model) {
   // Optional real model. Grounded and centred; the member attaches at CFG.modelAnchor.
