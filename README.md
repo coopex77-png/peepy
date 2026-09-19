@@ -1,4 +1,4 @@
-# peepee.online
+# peepy
 
 A frog whose length is the market cap. Live. Static site: `index.html` + `config.js`, no build step.
 
