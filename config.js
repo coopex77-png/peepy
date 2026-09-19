@@ -3,7 +3,7 @@ window.PEPE_CONFIG = {
   name: 'peepy',                // brand in the top-left
   ticker: 'PEEPY',              // "Buy $PEEPY"
   chain: 'solana',              // dexscreener chain id: solana, ethereum, base, bsc ...
-  mint: '',                     // contract address. Empty = "waiting to launch"
+  mint: 'CJF1M2m9xHWieQabyJkAja5fi6bieZ1hdcKrqVjwv7EY', // contract address. Empty = "waiting to launch"
   buy: '',                      // custom buy link. Empty = pump.fun/coin/<mint>
   model: '',                    // optional: '/assets/pepe.glb' to use a real model instead of the built-in one
   modelScale: 1,                // scale for the optional glb
