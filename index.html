@@ -453,7 +453,7 @@ const POLL = 2000;
 let fails = 0, timer = 0;
 const schedule = ms => { clearTimeout(timer); timer = setTimeout(poll, ms); };
 const poll = async () => {
-  if (document.hidden) return schedule(1000);
+  if (document.hidden && state.mc > 0) return schedule(1000);                  // always fetch the first reading, even in a background tab
   const before = state.mc;
   await tick();
   fails = state.mc === before && !(state.mc > 0) ? Math.min(fails + 1, 5) : 0;
