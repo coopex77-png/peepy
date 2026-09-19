@@ -357,23 +357,52 @@ const begin = () => {
 const state = {mc: 0, best: 0, log: []};
 // DexScreener allows 300 req/min on the token endpoints, so 2 s polling is comfortable. GeckoTerminal (~30/min) is only a
 // fallback and is never asked more than once every 10 s. Polling pauses while the tab is hidden and backs off after errors.
-let geckoAt = 0;
-const fetchMarket = async () => {
+let geckoAt = 0, quoteAt = 0, quoteUsd = 0;
+const bestPair = a => Array.isArray(a) && a.length ? a.slice().sort((x, y) => (y.liquidity?.usd || 0) - (x.liquidity?.usd || 0))[0] : null;
+const fetchDex = async () => {
   try {
-    const a = await (await fetch('https://api.dexscreener.com/tokens/v1/' + CHAIN + '/' + MINT, {cache: 'no-store'})).json();
-    if (Array.isArray(a) && a.length) {
-      const p = a.sort((x, y) => (y.liquidity?.usd || 0) - (x.liquidity?.usd || 0))[0];
-      return {mc: +(p.marketCap || p.fdv), price: +p.priceUsd, vol: p.volume?.h24, chg: p.priceChange?.h24, src: 'live'};
-    }
+    const p = bestPair(await (await fetch('https://api.dexscreener.com/tokens/v1/' + CHAIN + '/' + MINT, {cache: 'no-store'})).json());
+    if (p) return {mc: +(p.marketCap || p.fdv), price: +p.priceUsd, vol: p.volume?.h24, chg: p.priceChange?.h24, src: 'live'};
   } catch (e) {}
+  return null;
+};
+// Raydium LaunchLab pool, read straight from the chain: price = (virtualB + realB) / (virtualA - realA), in quote units.
+// Layout: 8 disc, u64 epoch, u8 authBump, u8 status, u8 decA, u8 decB, u8 migrateType, u64 supply, totalSellA, virtualA, virtualB, realA, realB ...
+const fetchPool = async () => {
+  if (!CFG.pool || !CFG.quote) return null;
+  try {
+    const r = await (await fetch(CFG.rpc || 'https://solana-rpc.publicnode.com', {method: 'POST', headers: {'content-type': 'application/json'},
+      body: JSON.stringify({jsonrpc: '2.0', id: 1, method: 'getAccountInfo', params: [CFG.pool, {encoding: 'base64', commitment: 'processed'}]})})).json();
+    const b64 = r.result?.value?.data?.[0]; if (!b64) return null;
+    const bin = atob(b64), d = new DataView(Uint8Array.from(bin, c => c.charCodeAt(0)).buffer);
+    const u = o => Number(d.getBigUint64(o, true));
+    const decA = d.getUint8(18), decB = d.getUint8(19), supply = u(21) / 10 ** decA, vA = u(37), vB = u(45), rA = u(53), rB = u(61);
+    const priceQ = ((vB + rB) / 10 ** decB) / ((vA - rA) / 10 ** decA);
+    if (Date.now() - quoteAt > 15000) {                                   // the quote token's dollar price, refreshed every 15 s
+      quoteAt = Date.now();
+      try { const q = bestPair(await (await fetch('https://api.dexscreener.com/tokens/v1/' + CHAIN + '/' + CFG.quote)).json()); if (q) quoteUsd = +q.priceUsd || quoteUsd; } catch (e) {}
+    }
+    if (!(priceQ > 0) || !quoteUsd) return null;
+    return {mc: priceQ * supply * quoteUsd, price: priceQ * quoteUsd, vol: null, chg: null, src: 'live'};
+  } catch (e) {}
+  return null;
+};
+const fetchGecko = async () => {
   if (Date.now() - geckoAt < 10000) return null;
   geckoAt = Date.now();
   try {
     const net = CHAIN === 'ethereum' ? 'eth' : CHAIN;
     const a = (await (await fetch('https://api.geckoterminal.com/api/v2/networks/' + net + '/tokens/' + MINT)).json()).data.attributes;
-    return {mc: +(a.market_cap_usd || a.fdv_usd), price: +a.price_usd, vol: +(a.volume_usd?.h24 || 0), chg: null, src: 'live'};
+    if (+(a.market_cap_usd || a.fdv_usd) > 0) return {mc: +(a.market_cap_usd || a.fdv_usd), price: +a.price_usd, vol: +(a.volume_usd?.h24 || 0), chg: null, src: 'live'};
   } catch (e) {}
   return null;
+};
+// The chain is the freshest source while the token is on its launch curve; DexScreener adds volume / 24h once it has indexed.
+const fetchMarket = async () => {
+  const [dex, pool] = await Promise.all([fetchDex(), fetchPool()]);
+  if (pool) return {...pool, vol: dex?.vol ?? null, chg: dex?.chg ?? null};
+  if (dex) return dex;
+  return fetchGecko();
 };
 // ?mc=250000 previews any market cap. Before launch the figure sits at zero, and says so.
 const demoMc = Math.min(Math.max(+qs.get('mc') || 6000, 1000), 5e8);
