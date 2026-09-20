@@ -93,11 +93,14 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 
 /* bottom bar */
 #bar{left:0;right:0;bottom:0;border-top:1px solid var(--line);background:linear-gradient(transparent,rgba(8,8,10,.82) 40%);
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto;align-items:center;gap:20px;padding:16px 30px 18px}
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto auto;align-items:center;gap:20px;padding:16px 30px 18px}
 #bar .cell{display:grid;gap:6px;min-width:0}
 #bar .cell b{font-family:var(--mono);font-size:16px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #bar .buy{border:1px solid var(--line2);border-radius:999px;padding:11px 24px;font-size:14px;font-weight:500;letter-spacing:.02em;transition:background .25s,color .25s,border-color .25s;white-space:nowrap}
 #bar .buy:hover{background:var(--ink);color:#08080a;border-color:var(--ink)}
+#bar .x{width:44px;height:44px;border:1px solid var(--line2);border-radius:999px;display:grid;place-items:center;transition:background .25s,border-color .25s;justify-self:end}
+#bar .x svg{width:16px;height:16px;fill:var(--ink);transition:fill .25s}
+#bar .x:hover{background:var(--ink);border-color:var(--ink)} #bar .x:hover svg{fill:#08080a}
 #bar .ca{display:flex;align-items:center;gap:8px}
 #bar .ca code{font-family:var(--mono);font-size:12px;color:var(--dim);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #bar .ca code:hover{color:var(--ink)}
@@ -127,8 +130,10 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
   #log{display:none}
   #bar{grid-template-columns:1fr 1fr;gap:12px 18px;padding:12px 18px 14px}
   #bar .cell b{font-size:14px}
-  #bar .buy{padding:10px 20px;grid-column:1/-1;text-align:center}
+  #bar .buy{padding:10px 20px;grid-column:1/2;grid-row:3;text-align:center}
+  #bar .x{grid-column:2/3;grid-row:3;justify-self:stretch;width:auto;height:42px}
   #bar .ca{grid-column:1/-1}
+  #bar{grid-template-columns:1fr 1fr;grid-auto-flow:dense}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* ?shot — clean render for images: white studio, no chrome */
@@ -173,6 +178,7 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
 <footer class="ui" id="bar">
   <div class="cell"><span class="lbl">Price</span><b data-price>updating now</b></div>
   <div class="cell ca"><div style="display:grid;gap:6px;min-width:0"><span class="lbl">Contract</span><code data-ca title="Copy">updating now</code></div></div>
+  <a class="x" data-x target="_blank" rel="noopener" title="peepee on X" aria-label="X"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
   <a class="buy" data-buy target="_blank" rel="noopener">Buy $PEEPEE</a>
 </footer>
 
@@ -207,6 +213,7 @@ const time = () => new Date().toLocaleTimeString([], {hour: '2-digit', minute: '
 document.title = NAME.toUpperCase();
 $('[data-name]').textContent = NAME;
 $('[data-buy]').href = BUY; $('[data-buy]').textContent = 'Buy $' + TICKER;
+if (CFG.x) $('[data-x]').href = CFG.x; else $('[data-x]').remove();
 if (MINT) { const c = $('[data-ca]'); c.textContent = MINT.slice(0, 6) + '…' + MINT.slice(-6); c.onclick = () => { navigator.clipboard?.writeText(MINT); const t = c.textContent; c.textContent = 'copied'; setTimeout(() => c.textContent = t, 1200); }; }
 
 /* ---------- studio ---------- */
