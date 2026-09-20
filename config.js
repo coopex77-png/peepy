@@ -4,7 +4,7 @@ window.PEPE_CONFIG = {
   ticker: 'PEEPEE',             // "Buy $PEEPEE"
   chain: 'solana',              // dexscreener chain id: solana, ethereum, base, bsc ...
   mint: 'CZ3qbW9qwENcoBfv5b4sNcbhvziWu4o2LbNP4BEibCHq',                     // contract address. Empty = "waiting to launch"
-  buy: '',                      // custom buy link. Empty = pump.fun/coin/<mint>
+  buy: 'https://www.stonkfun.xyz/token/CZ3qbW9qwENcoBfv5b4sNcbhvziWu4o2LbNP4BEibCHq',                      // custom buy link. Empty = pump.fun/coin/<mint>
   placeholderMc: 6000,          // market cap shown while mint is empty
   // On-chain source for launchpad tokens the aggregators haven't indexed yet (Raydium LaunchLab / bonk.fun style pools).
   // pool = the LaunchLab PoolState account, quote = the pool's quote mint (SOL, USD1, PEPE ...). Leave empty to skip.
