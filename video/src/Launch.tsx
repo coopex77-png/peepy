@@ -41,7 +41,7 @@ export const Launch: React.FC<LaunchProps> = ({ marketCap, ticker, url }) => {
   const t = interpolate(frame, [10, 80], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
-    easing: Easing.bezier(0.16, 1, 0.3, 1),
+    easing: Easing.out(Easing.cubic),
   });
   const mc = marketCap * t;
   const cm = t === 0 ? 0 : cmFor(mc);
@@ -136,7 +136,7 @@ export const Launch: React.FC<LaunchProps> = ({ marketCap, ticker, url }) => {
           display: "flex",
           alignItems: "center",
           gap: 22,
-          opacity: interpolate(frame, [0, 15], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+          opacity: interpolate(frame, [0, 15, 170, 190], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
         }}
       >
         <Interactive.Div name="Name" style={{ fontSize: 34, fontWeight: 600, letterSpacing: "0.34em", textTransform: "uppercase" }}>
@@ -157,7 +157,7 @@ export const Launch: React.FC<LaunchProps> = ({ marketCap, ticker, url }) => {
           display: "grid",
           gap: 8,
           justifyItems: "end",
-          opacity: interpolate(frame, [0, 15], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+          opacity: interpolate(frame, [0, 15, 170, 190], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
         }}
       >
         <Interactive.Div name="Label" style={{ fontFamily: mono, fontSize: 20, letterSpacing: "0.18em", color: "#55555e", textTransform: "uppercase" }}>
@@ -172,16 +172,16 @@ export const Launch: React.FC<LaunchProps> = ({ marketCap, ticker, url }) => {
         style={{
           position: "absolute",
           left: 60,
-          bottom: 180,
+          bottom: 162,
           display: "grid",
-          gap: 10,
+          gap: 8,
           opacity: interpolate(frame, [6, 20, 170, 190], [0, 1, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
         }}
       >
         <Interactive.Div name="Label" style={{ fontFamily: mono, fontSize: 20, letterSpacing: "0.18em", color: "#55555e", textTransform: "uppercase" }}>
           Length
         </Interactive.Div>
-        <div style={{ fontFamily: mono, fontSize: 150, lineHeight: 0.92, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums" }}>
+        <div style={{ fontFamily: mono, fontSize: 108, lineHeight: 0.92, letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums" }}>
           {fmtCm(cm)}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 22, fontFamily: mono, fontSize: 24, color: "#8b8b93", marginTop: 6 }}>
@@ -236,10 +236,10 @@ export const Launch: React.FC<LaunchProps> = ({ marketCap, ticker, url }) => {
         name="Dim"
         style={{
           backgroundColor: "#050608",
-          opacity: interpolate(frame, [172, 200], [0, 0.78], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+          opacity: interpolate(frame, [172, 200], [0, 0.7], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
         }}
       />
-      <AbsoluteFill name="End card" style={{ justifyContent: "center", alignItems: "center", textAlign: "center", gap: 28 }}>
+      <AbsoluteFill name="End card" style={{ justifyContent: "flex-start", alignItems: "center", textAlign: "center", gap: 22, paddingTop: 200 }}>
         <Interactive.Div
           name="Tagline"
           style={{

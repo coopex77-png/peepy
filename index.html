@@ -124,8 +124,8 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
 <div class="ui" id="log"></div>
 
 <footer class="ui" id="bar">
-  <div class="cell"><span class="lbl">Price</span><b data-price>—</b></div>
-  <div class="cell ca"><div style="display:grid;gap:6px;min-width:0"><span class="lbl">Contract</span><code data-ca title="Copy">not set</code></div></div>
+  <div class="cell"><span class="lbl">Price</span><b data-price>updating now</b></div>
+  <div class="cell ca"><div style="display:grid;gap:6px;min-width:0"><span class="lbl">Contract</span><code data-ca title="Copy">updating now</code></div></div>
   <a class="buy" data-buy target="_blank" rel="noopener">Buy $PEEPEE</a>
 </footer>
 
@@ -424,7 +424,7 @@ const tick = async () => {
   $('[data-len]').textContent = fmtCm(cm);
   $('[data-inch]').textContent = (cm / 2.54).toFixed(1) + ' in';
   $('[data-mc]').textContent = fmtMC(m.mc);
-  $('[data-price]').textContent = m.price ? fmtPrice(m.price) : '—';
+  $('[data-price]').textContent = m.price ? fmtPrice(m.price) : DEMO && !PREVIEW ? 'updating now' : '—';
   $('[data-src]').textContent = m.src;
   const dot = $('.brand .dot'); dot.style.background = dot.style.boxShadow = '';
   if (PREVIEW) { dot.style.background = '#e8b45f'; dot.style.boxShadow = '0 0 10px #e8b45f'; }
