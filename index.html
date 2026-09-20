@@ -54,7 +54,7 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 @keyframes pulse{50%{opacity:.35}}
 .brand small{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase}
 /* tagline under the brand: three short lines, the verbs coloured like the ticker */
-.tag{margin-top:14px;display:grid;gap:5px;font-family:var(--mono);font-size:12px;line-height:1.4;letter-spacing:.02em;color:var(--dim);max-width:340px}
+.tag{margin-top:18px;display:grid;gap:8px;font-family:var(--mono);font-size:17px;line-height:1.35;letter-spacing:.01em;color:var(--dim);max-width:460px}
 .tag b{font-weight:400;color:var(--ink)}
 .tag .up{color:var(--up)} .tag .down{color:var(--down)}
 #head .right{text-align:right;display:grid;gap:5px;justify-items:end}
@@ -90,7 +90,7 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 
 @media(max-width:820px){
   #head{padding:18px 18px}
-  .tag{margin-top:10px;font-size:11px;gap:3px}
+  .tag{margin-top:12px;font-size:13px;gap:4px}
   #read{left:18px;bottom:232px;gap:4px}
   #read .len{font-size:44px}
   #read .sub{font-size:11px}
@@ -161,8 +161,8 @@ const BUY = CFG.buy || (MINT ? 'https://pump.fun/coin/' + MINT : 'https://pump.f
 const NAME = CFG.name || 'Pepe', TICKER = CFG.ticker || 'PEPE';
 
 /* ---------- the joke, in numbers ---------- */
-// Length in cm from market cap: 27 cm at $5K, 38 cm at $10K, 1.2 m at $100K, 3.8 m at $1M, 12 m at $10M.
-const cmFor = mc => Math.max(2, 38 * Math.sqrt(Math.max(mc, 0) / 10000));
+// Length in cm from market cap: 42 cm at $5K, 60 cm at $10K, 1.9 m at $100K, 6 m at $1M, 19 m at $10M.
+const cmFor = mc => Math.max(2, 60 * Math.sqrt(Math.max(mc, 0) / 10000));
 const CM = 0.03;                                   // scene units per cm (the frog is ~3 units tall)
 const fmtMC = n => !n ? '—' : n >= 1e9 ? '$' + (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? '$' + (n / 1e3).toFixed(1) + 'K' : '$' + n.toFixed(0);
 const fmtCm = cm => cm >= 100 ? (cm / 100).toFixed(2) + ' m' : cm.toFixed(1) + ' cm';
