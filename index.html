@@ -387,6 +387,8 @@ const fetchPool = async () => {
     const b64 = r.result?.value?.data?.[0]; if (!b64) return null;
     const bin = atob(b64), d = new DataView(Uint8Array.from(bin, c => c.charCodeAt(0)).buffer);
     const u = o => Number(d.getBigUint64(o, true));
+    const status = d.getUint8(17);                                          // 0 = curve trading; 1/2 = migrated, reserves frozen
+    if (status !== 0) return null;
     const decA = d.getUint8(18), decB = d.getUint8(19), supply = u(21) / 10 ** decA, vA = u(37), vB = u(45), rA = u(53), rB = u(61);
     const priceQ = ((vB + rB) / 10 ** decB) / ((vA - rA) / 10 ** decA);
     if (Date.now() - quoteAt > 15000) {                                   // the quote token's dollar price, refreshed every 15 s
@@ -408,11 +410,12 @@ const fetchGecko = async () => {
   } catch (e) {}
   return null;
 };
-// The chain is the freshest source while the token is on its launch curve; DexScreener adds volume / 24h once it has indexed.
+// DexScreener first (it follows the token through migration to Raydium); the on-chain curve only while it's still trading
+// and nobody has indexed it yet; GeckoTerminal last.
 const fetchMarket = async () => {
   const [dex, pool] = await Promise.all([fetchDex(), fetchPool()]);
-  if (pool) return {...pool, vol: dex?.vol ?? null, chg: dex?.chg ?? null};
-  if (dex) return dex;
+  if (dex && dex.mc > 0) return dex;
+  if (pool) return pool;
   return fetchGecko();
 };
 // ?mc=250000 previews any market cap. Before launch the figure sits at zero, and says so.
