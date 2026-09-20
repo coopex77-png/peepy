@@ -336,7 +336,7 @@ const frame = () => {
     camera.position.set(Math.sin(yaw) * Math.cos(pitch) * d, 1.3 + Math.sin(pitch) * d, Math.cos(yaw) * Math.cos(pitch) * d);
     camera.lookAt(controls.target); rim.target.position.copy(controls.target); return;
   }
-  const L = shownCm * CM, span = Math.max(7.6, 6.4 + L * .72);
+  const L = shownCm * CM, span = Math.max(7.6, 6.4 + L * 1.0);
   const want = span / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * (camera.aspect < 1 ? 1.2 / camera.aspect : 1) * .92;
   const d = camera.position.distanceTo(controls.target);
   if (Math.abs(d - want) > .05) { const v = camera.position.clone().sub(controls.target).setLength(d + (want - d) * .04); camera.position.copy(controls.target).add(v); }
