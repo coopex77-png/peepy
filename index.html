@@ -149,8 +149,8 @@ const BUY = CFG.buy || (MINT ? 'https://pump.fun/coin/' + MINT : 'https://pump.f
 const NAME = CFG.name || 'Pepe', TICKER = CFG.ticker || 'PEPE';
 
 /* ---------- the joke, in numbers ---------- */
-// Length in cm from market cap: 13 cm at $5K, 19 cm at $10K, 60 cm at $100K, 1.9 m at $1M, 6 m at $10M.
-const cmFor = mc => Math.max(2, 19 * Math.sqrt(Math.max(mc, 0) / 10000));
+// Length in cm from market cap: 18 cm at $5K, 26 cm at $10K, 82 cm at $100K, 2.6 m at $1M, 8.2 m at $10M.
+const cmFor = mc => Math.max(2, 26 * Math.sqrt(Math.max(mc, 0) / 10000));
 const CM = 0.03;                                   // scene units per cm (the frog is ~3 units tall)
 const fmtMC = n => !n ? '—' : n >= 1e9 ? '$' + (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? '$' + (n / 1e3).toFixed(1) + 'K' : '$' + n.toFixed(0);
 const fmtCm = cm => cm >= 100 ? (cm / 100).toFixed(2) + ' m' : cm.toFixed(1) + ' cm';
