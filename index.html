@@ -63,7 +63,7 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 
 /* bottom bar */
 #bar{left:0;right:0;bottom:0;border-top:1px solid var(--line);background:linear-gradient(transparent,rgba(8,8,10,.82) 40%);
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:center;gap:20px;padding:16px 30px 18px}
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) auto;align-items:center;gap:20px;padding:16px 30px 18px}
 #bar .cell{display:grid;gap:6px;min-width:0}
 #bar .cell b{font-family:var(--mono);font-size:16px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #bar .buy{border:1px solid var(--line2);border-radius:999px;padding:11px 24px;font-size:14px;font-weight:500;letter-spacing:.02em;transition:background .25s,color .25s,border-color .25s;white-space:nowrap}
@@ -124,8 +124,6 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
 
 <footer class="ui" id="bar">
   <div class="cell"><span class="lbl">Price</span><b data-price>—</b></div>
-  <div class="cell"><span class="lbl">24h</span><b data-chg>—</b></div>
-  <div class="cell"><span class="lbl">Volume 24h</span><b data-vol>—</b></div>
   <div class="cell ca"><div style="display:grid;gap:6px;min-width:0"><span class="lbl">Contract</span><code data-ca title="Copy">not set</code></div></div>
   <a class="buy" data-buy target="_blank" rel="noopener">Buy $PEEPY</a>
 </footer>
@@ -150,8 +148,8 @@ const BUY = CFG.buy || (MINT ? 'https://pump.fun/coin/' + MINT : 'https://pump.f
 const NAME = CFG.name || 'Pepe', TICKER = CFG.ticker || 'PEPE';
 
 /* ---------- the joke, in numbers ---------- */
-// Length in cm from market cap: 8.5 cm at launch ($5K), 38 cm at $100K, 1 m at $700K, 3.8 m at $10M.
-const cmFor = mc => Math.max(2, 12 * Math.sqrt(Math.max(mc, 0) / 10000));
+// Length in cm from market cap: 13 cm at $5K, 19 cm at $10K, 60 cm at $100K, 1.9 m at $1M, 6 m at $10M.
+const cmFor = mc => Math.max(2, 19 * Math.sqrt(Math.max(mc, 0) / 10000));
 const CM = 0.03;                                   // scene units per cm (the frog is ~3 units tall)
 const fmtMC = n => !n ? '—' : n >= 1e9 ? '$' + (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? '$' + (n / 1e3).toFixed(1) + 'K' : '$' + n.toFixed(0);
 const fmtCm = cm => cm >= 100 ? (cm / 100).toFixed(2) + ' m' : cm.toFixed(1) + ' cm';
@@ -266,7 +264,7 @@ const ends = {base: new THREE.Vector3(), tip: new THREE.Vector3()}, tmp = new TH
 const updateMember = t => {
   if (!ready) return;
   const b = pivot.worldToLocal(rig.anchor.getWorldPosition(tmp)).clone();
-  const L = shownCm * CM, r = .06 + Math.min(.21, L * .065);
+  const L = shownCm * CM, r = .085 + Math.min(.27, L * .08);
   const bounce = Math.sin(t * 8.4) * .05 * Math.min(L, 4);
   const dir = new THREE.Vector3(0, -.35, 1).normalize();    // out the front, dipping
   const sag = Math.pow(L, 1.35) * .18 + bounce;
@@ -420,7 +418,7 @@ const tick = async () => {
     targetCm = 0;
     $('[data-len]').textContent = '0.0 cm'; $('[data-inch]').textContent = '0.0 in';
     $('[data-mc]').textContent = '$0';
-    $('[data-price]').textContent = '$0'; $('[data-vol]').textContent = '$0'; $('[data-chg]').textContent = '0.0%';
+    $('[data-price]').textContent = '$0';
     $('[data-src]').textContent = 'waiting to launch'; $('[data-note]').textContent = 'not launched yet';
     const d = $('.brand .dot'); d.style.background = '#e8b45f'; d.style.boxShadow = '0 0 10px #e8b45f';
     return;
@@ -434,8 +432,6 @@ const tick = async () => {
   $('[data-inch]').textContent = (cm / 2.54).toFixed(1) + ' in';
   $('[data-mc]').textContent = fmtMC(m.mc);
   $('[data-price]').textContent = m.price ? fmtPrice(m.price) : '—';
-  $('[data-vol]').textContent = m.vol ? fmtMC(m.vol) : '—';
-  $('[data-chg]').innerHTML = m.chg == null ? '—' : `<span style="color:${m.chg >= 0 ? 'var(--up)' : 'var(--down)'}">${m.chg >= 0 ? '+' : ''}${(+m.chg).toFixed(1)}%</span>`;
   $('[data-src]').textContent = m.src;
   const dot = $('.brand .dot'); dot.style.background = dot.style.boxShadow = '';
   if (DEMO || PREVIEW) { dot.style.background = '#e8b45f'; dot.style.boxShadow = '0 0 10px #e8b45f'; }
