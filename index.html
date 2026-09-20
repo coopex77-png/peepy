@@ -63,7 +63,7 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 /* "Launched on MemeForge": a glass pill, top centre. Lockup on top, a lime call-to-action underneath; the mark's core
    breathes, and on hover the arrow slides and the pill lifts. */
 #launched{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:16px;
-  padding:12px 26px 12px 18px;border:1px solid #defd41;border-radius:999px;background:linear-gradient(180deg,#defd4124,#defd410c),rgba(10,11,15,.72);
+  padding:12px 24px 12px 20px;border:1px solid #defd41;border-radius:999px;background:linear-gradient(180deg,#defd4124,#defd410c),rgba(10,11,15,.72);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);overflow:hidden;isolation:isolate;
   box-shadow:0 0 0 1px #00000040,0 14px 40px -12px #000,inset 0 1px 0 #defd4155;
   transition:border-color .3s,transform .3s,box-shadow .3s}
@@ -72,17 +72,9 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 #launched::before{content:'';position:absolute;inset:-1px;z-index:-1;border-radius:inherit;
   background:linear-gradient(115deg,transparent 30%,#defd4160 50%,transparent 70%);background-size:250% 100%;animation:sweep 4.5s ease-in-out infinite}
 @keyframes sweep{0%,60%{background-position:120% 0}100%{background-position:-120% 0}}
-#launched .mark{position:relative;width:34px;height:34px;flex:none}
-#launched .mark img{width:100%;height:100%;display:block}
-#launched .mark::after{content:'';position:absolute;inset:8px;border-radius:50%;background:radial-gradient(#defd41aa,transparent 65%);animation:breathe 2.4s ease-in-out infinite;pointer-events:none}
-@keyframes breathe{50%{transform:scale(1.7);opacity:.35}}
-#launched .txt{display:grid;gap:5px;line-height:1}
-#launched .top{display:flex;align-items:center;gap:9px}
-#launched .top .lbl{color:#defd41;font-size:10px;letter-spacing:.24em}
-#launched .top img{height:15px;width:auto;display:block}
-#launched .cta{display:flex;align-items:center;gap:8px;font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:.005em;color:#defd41;white-space:nowrap;text-shadow:0 0 16px #defd4199}
-#launched .cta i{font-style:normal;display:inline-block;transition:transform .3s}
-#launched:hover .cta i{transform:translateX(4px)}
+#launched .lbl{color:var(--ink);font-size:11px;letter-spacing:.24em;white-space:nowrap}
+#launched .sep{width:1px;height:18px;background:#defd4166}
+#launched img{height:22px;width:auto;display:block;transform:translateY(.5px)}
 
 /* the number */
 #read{left:30px;bottom:150px;display:grid;gap:6px}
@@ -116,10 +108,10 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
   #head{padding:18px 18px}
   #launched{top:auto;bottom:196px;left:auto;right:18px;transform:none;padding:9px 16px 9px 12px;gap:12px}
   #launched:hover{transform:translateY(-1px)}
-  #launched .mark{width:28px;height:28px}
-  #launched .top img{height:13px}
-  #launched .cta{font-size:12px}
-  .tag{margin-top:12px;font-size:13px;gap:4px}
+  #launched .lbl{font-size:10px}
+  #launched .sep{height:14px}
+  #launched img{height:16px}
+    .tag{margin-top:12px;font-size:13px;gap:4px}
   #read{left:18px;bottom:232px;gap:4px}
   #read .len{font-size:44px}
   #read .sub{font-size:11px}
@@ -155,12 +147,8 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
   <div class="right"><span class="lbl">Market cap</span><span class="v" data-mc>—</span></div>
 </header>
 
-<a id="launched" href="https://memeforge.dev" target="_blank" rel="noopener" title="Launch your own on MemeForge">
-  <span class="mark"><img src="assets/memeforge-mark.svg" alt=""></span>
-  <span class="txt">
-    <span class="top"><span class="lbl">Launched on</span><img src="assets/memeforge-wordmark.svg" alt="MemeForge"></span>
-    <span class="cta">Launch yours in minutes <i>→</i></span>
-  </span>
+<a id="launched" href="https://memeforge.dev" target="_blank" rel="noopener" title="Launched on MemeForge">
+  <span class="lbl">Launched on</span><span class="sep"></span><img src="assets/memeforge-logo.svg" alt="MemeForge">
 </a>
 
 <div class="ui" id="read">
