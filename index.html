@@ -60,19 +60,31 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 #head .right{text-align:right;display:grid;gap:5px;justify-items:end}
 #head .right .v{font-family:var(--mono);font-size:13px;color:var(--dim)}
 
-/* "Launched on MemeForge": a glass pill, top centre, the lockup inside; a slow light sweep so the eye finds it once */
-#launched{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:18px;
-  padding:14px 26px 14px 22px;border:1px solid #defd4155;border-radius:999px;background:rgba(10,11,15,.62);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);overflow:hidden;isolation:isolate;
-  box-shadow:0 0 0 1px #00000040,0 14px 40px -12px #000,0 0 28px -6px #defd4140,inset 0 1px 0 #ffffff18;transition:border-color .3s,transform .3s,box-shadow .3s}
-#launched:hover{border-color:#defd41bb;transform:translateX(-50%) translateY(-1px);box-shadow:0 0 0 1px #00000040,0 14px 40px -12px #000,0 0 36px -4px #defd4166,inset 0 1px 0 #ffffff18}
+/* "Launched on MemeForge": a glass pill, top centre. Lockup on top, a lime call-to-action underneath; the mark's core
+   breathes, and on hover the arrow slides and the pill lifts. */
+#launched{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:16px;
+  padding:12px 26px 12px 18px;border:1px solid #defd41;border-radius:999px;background:linear-gradient(180deg,#defd4124,#defd410c),rgba(10,11,15,.72);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);overflow:hidden;isolation:isolate;
+  box-shadow:0 0 0 1px #00000040,0 14px 40px -12px #000,0 0 54px -2px #defd4199,inset 0 1px 0 #defd4155;
+  transition:border-color .3s,transform .3s,box-shadow .3s}
+#launched:hover{border-color:#defd41;transform:translateX(-50%) translateY(-2px);
+  box-shadow:0 0 0 1px #00000040,0 18px 44px -12px #000,0 0 60px -2px #defd4199,inset 0 1px 0 #defd4144}
 #launched::before{content:'';position:absolute;inset:-1px;z-index:-1;border-radius:inherit;
-  background:linear-gradient(115deg,transparent 30%,#defd4130 50%,transparent 70%);background-size:250% 100%;animation:sweep 5s ease-in-out infinite}
+  background:linear-gradient(115deg,transparent 30%,#defd4160 50%,transparent 70%);background-size:250% 100%;animation:sweep 4.5s ease-in-out infinite}
 @keyframes sweep{0%,60%{background-position:120% 0}100%{background-position:-120% 0}}
-#launched .lbl{color:var(--ink);font-size:12px;letter-spacing:.22em;white-space:nowrap}
-#launched .sep{width:1px;height:20px;background:#defd4155}
-#launched img{height:26px;width:auto;display:block;filter:drop-shadow(0 0 10px #defd4133)}
-#launched .glow{position:absolute;left:0;top:0;bottom:0;width:6px;pointer-events:none}
+#launched{animation:pulse-lime 3s ease-in-out infinite}
+@keyframes pulse-lime{50%{box-shadow:0 0 0 1px #00000040,0 14px 40px -12px #000,0 0 72px 0 #defd41bb,inset 0 1px 0 #defd4155}}
+#launched .mark{position:relative;width:34px;height:34px;flex:none}
+#launched .mark img{width:100%;height:100%;display:block}
+#launched .mark::after{content:'';position:absolute;inset:8px;border-radius:50%;background:radial-gradient(#defd41aa,transparent 65%);animation:breathe 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes breathe{50%{transform:scale(1.7);opacity:.35}}
+#launched .txt{display:grid;gap:5px;line-height:1}
+#launched .top{display:flex;align-items:center;gap:9px}
+#launched .top .lbl{color:#defd41;font-size:10px;letter-spacing:.24em}
+#launched .top img{height:15px;width:auto;display:block}
+#launched .cta{display:flex;align-items:center;gap:8px;font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:.005em;color:#defd41;white-space:nowrap;text-shadow:0 0 16px #defd4199}
+#launched .cta i{font-style:normal;display:inline-block;transition:transform .3s}
+#launched:hover .cta i{transform:translateX(4px)}
 
 /* the number */
 #read{left:30px;bottom:150px;display:grid;gap:6px}
@@ -104,11 +116,11 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 
 @media(max-width:820px){
   #head{padding:18px 18px}
-  #launched{top:auto;bottom:196px;left:auto;right:18px;transform:none;padding:10px 16px 10px 14px;gap:12px}
+  #launched{top:auto;bottom:196px;left:auto;right:18px;transform:none;padding:9px 16px 9px 12px;gap:12px}
   #launched:hover{transform:translateY(-1px)}
-  #launched .lbl{font-size:10px}
-  #launched .sep{height:16px}
-  #launched img{height:18px}
+  #launched .mark{width:28px;height:28px}
+  #launched .top img{height:13px}
+  #launched .cta{font-size:12px}
   .tag{margin-top:12px;font-size:13px;gap:4px}
   #read{left:18px;bottom:232px;gap:4px}
   #read .len{font-size:44px}
@@ -145,8 +157,12 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
   <div class="right"><span class="lbl">Market cap</span><span class="v" data-mc>—</span></div>
 </header>
 
-<a id="launched" href="https://memeforge.dev" target="_blank" rel="noopener" title="Launched on MemeForge">
-  <span class="lbl">Launched on</span><span class="sep"></span><img src="assets/memeforge-logo.svg" alt="MemeForge">
+<a id="launched" href="https://memeforge.dev" target="_blank" rel="noopener" title="Launch your own on MemeForge">
+  <span class="mark"><img src="assets/memeforge-mark.svg" alt=""></span>
+  <span class="txt">
+    <span class="top"><span class="lbl">Launched on</span><img src="assets/memeforge-wordmark.svg" alt="MemeForge"></span>
+    <span class="cta">Launch yours in minutes <i>→</i></span>
+  </span>
 </a>
 
 <div class="ui" id="read">
@@ -328,7 +344,12 @@ const idle = t => {
   rig.arms.forEach((a, i) => { a.rotation.x = Math.sin(t * 1.5 + i * 2) * .05; a.rotation.z = (i ? 1 : -1) * -.1 + Math.sin(t * 1.1 + i) * .02; });
 };
 
-// Camera pulls back as it grows so the whole thing stays in frame.
+// Camera framing: fit a bounding sphere around the frog and both ends of the member into the narrower half-angle of the
+// frustum (vertical on desktop, horizontal on phones), with a margin. Whatever the size or rotation, the tip stays on screen.
+const FROG = [[-1.45, 0, -1.3], [1.45, 3.15, 1.3]].map(a => new THREE.Vector3(...a));
+const fitPts = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+const fitBox = new THREE.Box3(), fitC = new THREE.Vector3(), fitTarget = new THREE.Vector3();
+let shadowSpan = 18;
 const frame = () => {
   if (SHOT) {
     const yaw = THREE.MathUtils.degToRad(+(qs.get('yaw') ?? -68)), pitch = THREE.MathUtils.degToRad(+(qs.get('pitch') ?? 14)), d = +(qs.get('dist') ?? 8.2);
@@ -336,12 +357,22 @@ const frame = () => {
     camera.position.set(Math.sin(yaw) * Math.cos(pitch) * d, 1.3 + Math.sin(pitch) * d, Math.cos(yaw) * Math.cos(pitch) * d);
     camera.lookAt(controls.target); rim.target.position.copy(controls.target); return;
   }
-  const L = shownCm * CM, span = Math.max(7.6, 6.4 + L * 1.0);
-  const want = span / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * (camera.aspect < 1 ? 1.2 / camera.aspect : 1) * .92;
+  fitPts[0].copy(FROG[0]); fitPts[1].copy(FROG[1]); fitPts[2].copy(ends.base); fitPts[3].copy(ends.tip);
+  fitBox.setFromPoints(fitPts); fitBox.getCenter(fitC);
+  let R = 0; for (const p of fitPts) R = Math.max(R, p.distanceTo(fitC));
+  // the box corners, not just its extremes, must fit: use the half-diagonal
+  R = Math.max(R, fitBox.min.distanceTo(fitBox.max) / 2);
+  const vf = THREE.MathUtils.degToRad(camera.fov / 2), hf = Math.atan(Math.tan(vf) * camera.aspect);
+  const want = Math.max(11.5, R / Math.sin(Math.min(vf, hf)) * 1.32);
   const d = camera.position.distanceTo(controls.target);
   if (Math.abs(d - want) > .05) { const v = camera.position.clone().sub(controls.target).setLength(d + (want - d) * .04); camera.position.copy(controls.target).add(v); }
-  controls.target.lerp(new THREE.Vector3(0, 1.35 + Math.min(2, L * .22), 0), .04);
+  fitTarget.set(0, Math.max(1.35, fitC.y), 0);
+  controls.target.lerp(fitTarget, .04);
   rim.target.position.copy(controls.target);
+  // the studio scales with the camera: fog stays behind the subject, the shadow map keeps covering the whole member
+  if (scene.fog) { scene.fog.near = d * 1.3; scene.fog.far = d * 3.7; }
+  const L = shownCm * CM;
+  if (L + 8 > shadowSpan) { shadowSpan = L + 12; Object.assign(key.shadow.camera, {left: -shadowSpan, right: shadowSpan, top: shadowSpan, bottom: -8, far: shadowSpan * 3}); key.shadow.camera.updateProjectionMatrix(); key.position.set(6, 8.5, 5).multiplyScalar(shadowSpan / 18); }
 };
 
 const resize = () => { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };

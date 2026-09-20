@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MemeForge — mark only, transparent, for dark backgrounds -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g id="mark">
+    <g fill="none" stroke="#F4F5F7" stroke-width="32">
+      <path d="M401.5 292.3A150 150 0 0 1 292.3 401.5"/><path d="M219.7 401.5A150 150 0 0 1 110.5 292.3"/>
+      <path d="M110.5 219.7A150 150 0 0 1 219.7 110.5"/><path d="M292.3 110.5A150 150 0 0 1 401.5 219.7"/>
+    </g>
+    <g fill="#F4F5F7"><rect x="241" y="52" width="30" height="84"/><rect x="376" y="241" width="84" height="30"/><rect x="241" y="376" width="30" height="84"/><rect x="52" y="241" width="84" height="30"/></g>
+    <path fill="#DEFD41" d="M256 184Q277.6 234.4 328 256Q277.6 277.6 256 328Q234.4 277.6 184 256Q234.4 234.4 256 184Z"/>
+  </g>
+</svg>
