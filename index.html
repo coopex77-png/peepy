@@ -13,7 +13,6 @@
 <meta name="twitter:description" content="A frog whose length is the market cap. Live.">
 <meta property="og:description" content="A frog whose length is the market cap. Live.">
 <meta name="theme-color" content="#08080a">
-<link rel="preload" as="image" href="assets/splash.jpg">
 <meta property="og:image" content="https://peepee.online/assets/splash.png">
 <meta name="twitter:image" content="https://peepee.online/assets/splash.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%90%B8%3C/text%3E%3C/svg%3E">
@@ -82,20 +81,8 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 @keyframes fade{to{opacity:1}}
 
 /* first load */
-#boot{position:fixed;inset:0;z-index:20;background:#050608;display:grid;place-items:center;transition:opacity .9s ease}
+#boot{position:fixed;inset:0;z-index:20;background:var(--bg);transition:opacity .6s}
 #boot.gone{opacity:0;pointer-events:none}
-#boot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%;display:block;animation:bootin 2.4s cubic-bezier(.2,.7,.2,1) both}
-@keyframes bootin{from{transform:scale(1.06);opacity:0}to{transform:scale(1);opacity:1}}
-/* loading indicator: a hairline that fills across the bottom, and a mono label with ticking dots */
-#boot .load{position:absolute;left:30px;right:30px;bottom:34px;display:grid;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
-#boot .load .row{display:flex;justify-content:space-between;align-items:center}
-#boot .load .dots::after{content:'';animation:dots 1.2s steps(4,end) infinite}
-@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
-#boot .load .pct{color:var(--ink);font-variant-numeric:tabular-nums}
-#boot .bar{height:1px;background:#ffffff1f;overflow:hidden}
-#boot .bar i{display:block;height:100%;width:0;background:var(--ink);transform-origin:left;animation:fill 2s cubic-bezier(.35,.1,.25,1) forwards}
-@keyframes fill{to{width:100%}}
-@media(max-width:820px){#boot .load{left:18px;right:18px;bottom:24px}}
 
 @media(max-width:820px){
   #head{padding:18px 18px}
@@ -142,10 +129,7 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
   <a class="buy" data-buy target="_blank" rel="noopener">Buy $PEEPEE</a>
 </footer>
 
-<div id="boot">
-  <img src="assets/splash.jpg" alt="peepee" decoding="async" fetchpriority="high">
-  <div class="load"><div class="row"><span><span data-loadtext>loading</span><span class="dots"></span></span><span class="pct" data-pct>0%</span></div><div class="bar"><i></i></div></div>
-</div>
+<div id="boot"></div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -345,8 +329,6 @@ const paintRule = () => {
   rl.t.setAttribute('x', (p0.x + p1.x) / 2); rl.t.setAttribute('y', y - 12); rl.t.textContent = fmtCm(shownCm);
 };
 
-// Splash counter: 0 → 100 % over the 2 s the bar takes to fill.
-{ const pct = $('[data-pct]'), t0 = performance.now(); const step = () => { const k = Math.min(1, (performance.now() - t0) / 2000), e = 1 - Math.pow(1 - k, 3); pct.textContent = Math.round(e * 100) + '%'; if (k < 1) requestAnimationFrame(step); else $('[data-loadtext]').textContent = 'ready'; }; step(); }
 const clock = new THREE.Clock(), t0 = performance.now();
 let mixer = null;
 window.__png = () => canvas.toDataURL('image/png');
@@ -366,7 +348,7 @@ const begin = () => {
   ready = true;
   camera.position.set(9, 3.2, 6); controls.target.set(0, 1.35, 0);
   requestAnimationFrame(loop);
-  setTimeout(() => $('#boot').classList.add('gone'), Math.max(300, 2000 - performance.now()));   // splash stays 2 s from page open, longer only if the scene isn't ready
+  setTimeout(() => $('#boot').classList.add('gone'), 260);
   start();
 };
 
@@ -424,7 +406,8 @@ const fetchMarket = async () => {
 // ?mc=250000 previews any market cap. Before launch the figure sits at zero, and says so.
 const demoMc = Math.min(Math.max(+qs.get('mc') || 6000, 1000), 5e8);
 const PREVIEW = qs.has('mc');
-const fakeMarket = () => ({mc: demoMc, price: null, vol: null, chg: null, src: 'preview'});
+// No mint yet: the site sits at CFG.placeholderMc (default $6K) and reads as live until the CA is set.
+const fakeMarket = () => ({mc: PREVIEW ? demoMc : (+CFG.placeholderMc || 6000), price: null, vol: null, chg: null, src: PREVIEW ? 'preview' : 'live'});
 
 const pushLog = (text) => {
   state.log.unshift({text, t: time()});
@@ -433,15 +416,6 @@ const pushLog = (text) => {
 };
 
 const tick = async () => {
-  if (DEMO && !PREVIEW) {
-    targetCm = 0;
-    $('[data-len]').textContent = '0.0 cm'; $('[data-inch]').textContent = '0.0 in';
-    $('[data-mc]').textContent = '$0';
-    $('[data-price]').textContent = '$0';
-    $('[data-src]').textContent = 'waiting to launch'; $('[data-note]').textContent = 'not launched yet';
-    const d = $('.brand .dot'); d.style.background = '#e8b45f'; d.style.boxShadow = '0 0 10px #e8b45f';
-    return;
-  }
   const m = (DEMO || PREVIEW) ? fakeMarket() : await fetchMarket();   // ?mc= always wins, even with a live mint
   if (!m || !(m.mc > 0)) { $('[data-note]').textContent = MINT ? 'waiting for the first trade' : 'not launched yet'; return; }
   const prev = state.mc; state.mc = m.mc;
@@ -453,9 +427,9 @@ const tick = async () => {
   $('[data-price]').textContent = m.price ? fmtPrice(m.price) : '—';
   $('[data-src]').textContent = m.src;
   const dot = $('.brand .dot'); dot.style.background = dot.style.boxShadow = '';
-  if (DEMO || PREVIEW) { dot.style.background = '#e8b45f'; dot.style.boxShadow = '0 0 10px #e8b45f'; }
+  if (PREVIEW) { dot.style.background = '#e8b45f'; dot.style.boxShadow = '0 0 10px #e8b45f'; }
   const ch = prev ? m.mc / prev - 1 : 0;
-  $('[data-note]').textContent = PREVIEW ? 'preview' : DEMO ? 'not launched yet' : record && prev ? 'new high' : ch > .01 ? 'growing' : ch < -.01 ? 'receding' : 'holding';
+  $('[data-note]').textContent = PREVIEW ? 'preview' : DEMO ? 'holding' : record && prev ? 'new high' : ch > .01 ? 'growing' : ch < -.01 ? 'receding' : 'holding';
   const d = $('[data-delta]');
   if (prev && Math.abs(ch) > .01) {
     d.textContent = (ch > 0 ? '+' : '') + (ch * 100).toFixed(1) + '%';
@@ -477,7 +451,7 @@ const poll = async () => {
 const start = () => {
   if (DEMO || PREVIEW) { tick(); }
   else { poll(); document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(0); }); }
-  pushLog(PREVIEW ? 'preview mode' : DEMO ? 'waiting for launch' : 'measurement started');
+  pushLog(PREVIEW ? 'preview mode' : 'measurement started');
 };
 if (CFG.model) {
   // Optional real model. Grounded and centred; the member attaches at CFG.modelAnchor.
