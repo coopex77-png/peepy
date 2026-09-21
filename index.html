@@ -44,6 +44,10 @@ button,a{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text
 #rule line{stroke:var(--line2)}
 #rule .drop{stroke:#ffffff22;stroke-dasharray:2 4}
 #rule text{fill:var(--ink);font-family:var(--mono);font-size:13px;letter-spacing:.02em}
+#marks{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#marks text{font-family:var(--mono);font-size:11px;letter-spacing:.18em;fill:var(--faint);text-transform:uppercase}
+#marks text.hit{fill:var(--up)}
+#marks text.next{fill:var(--ink)}
 
 /* chrome */
 .ui{position:fixed;z-index:5}
@@ -147,6 +151,7 @@ html.shot .ui,html.shot #vig,html.shot #grain,html.shot #rule,html.shot #boot{di
 
 <canvas id="gl"></canvas>
 <svg id="rule"></svg>
+<svg id="marks"></svg>
 <div id="vig"></div><div id="grain"></div>
 
 <header class="ui" id="head">
@@ -314,6 +319,12 @@ for (const m of [shaft, tip, sheath]) { m.castShadow = true; m.receiveShadow = t
 pivot.add(shaft, tip, sheath);
 
 let shownCm = 0, targetCm = 0, ready = false;
+const DIR = new THREE.Vector3(0, .55, 1).normalize();
+const tipAt = (mc, base, out) => {                       // where the tip sits at a market cap, on the same sagging curve
+  const L = cmFor(mc) * CM, sag = Math.pow(L, 1.25) * .05;
+  out.copy(base).addScaledVector(DIR, L); out.y -= sag;
+  return out;
+};
 const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3());
 const ends = {base: new THREE.Vector3(), tip: new THREE.Vector3()}, tmp = new THREE.Vector3();
 const updateMember = t => {
@@ -335,6 +346,68 @@ const updateMember = t => {
   ends.base.copy(b); ends.tip.copy(end);
 };
 
+/* ---------- milestones ---------- */
+// Targets along the member's own axis: a dashed drop line from the floor, a floor ring, a bead where the tip will be,
+// and a label drawn in screen space. They live in the scene, so they turn with the frog as the camera orbits.
+// The last one is not a number, it is the moon.
+const MILESTONES = [{mc: 250000, label: '250K'}, {mc: 500000, label: '500K'}, {mc: 1000000, label: '1M'}];
+const MOON_MC = 5000000;
+const mkMilestone = () => {
+  const g = new THREE.Group();
+  const drop = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]),
+    new THREE.LineDashedMaterial({color: 0xffffff, transparent: true, opacity: .28, dashSize: .12, gapSize: .1}));
+  const ring = new THREE.Mesh(new THREE.RingGeometry(.22, .26, 40), new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false}));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = .004;
+  const bead = new THREE.Mesh(new THREE.SphereGeometry(.09, 14, 10), new THREE.MeshBasicMaterial({color: 0xf4f3f1, transparent: true, opacity: .85}));
+  const halo = new THREE.Mesh(new THREE.RingGeometry(.16, .19, 32), new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: .35, side: THREE.DoubleSide, depthWrite: false}));
+  g.add(drop, ring, bead, halo); g.userData = {drop, ring, bead, halo};
+  pivot.add(g); return g;
+};
+const milestones = MILESTONES.map(m => ({...m, obj: mkMilestone(), pos: new THREE.Vector3(), reached: false}));
+
+// The moon: a cratered ball that ignores the fog, hanging where the tip would be at $5M.
+const moonTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+  g.fillStyle = '#d9d8d0'; g.fillRect(0, 0, 512, 512);
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 140; i++) {
+    const x = rnd() * 512, y = rnd() * 512, r = 4 + rnd() * rnd() * 34;
+    const grad = g.createRadialGradient(x - r * .3, y - r * .3, r * .1, x, y, r);
+    grad.addColorStop(0, '#b8b7ae'); grad.addColorStop(.7, '#c9c8bf'); grad.addColorStop(1, 'rgba(217,216,208,0)');
+    g.fillStyle = grad; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+const moon = new THREE.Mesh(new THREE.SphereGeometry(1.7, 40, 28), new THREE.MeshStandardMaterial({map: moonTex, roughness: 1, metalness: 0, emissive: 0x3a3a36, emissiveMap: moonTex, emissiveIntensity: .45, fog: false}));
+moon.castShadow = false; moon.receiveShadow = false;
+const moonGlow = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  const r = g.createRadialGradient(128, 128, 40, 128, 128, 128); r.addColorStop(0, 'rgba(255,250,235,.55)'); r.addColorStop(.5, 'rgba(255,250,235,.12)'); r.addColorStop(1, 'rgba(255,250,235,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 256, 256);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false}));
+  sp.scale.setScalar(8); return sp;
+})();
+const moonGroup = new THREE.Group(); moonGroup.add(moon, moonGlow); pivot.add(moonGroup);
+const moonPos = new THREE.Vector3();
+
+const updateMilestones = t => {
+  if (!ready) return;
+  const mcNow = state.mc || (PREVIEW ? demoMc : (+CFG.placeholderMc || 6000));
+  for (const m of milestones) {
+    tipAt(m.mc, ends.base, m.pos);
+    const o = m.obj, u = o.userData;
+    o.position.set(0, 0, m.pos.z);
+    u.drop.scale.y = m.pos.y; u.drop.computeLineDistances();
+    u.bead.position.y = m.pos.y; u.halo.position.y = m.pos.y; u.halo.lookAt(camera.position);
+    m.reached = mcNow >= m.mc;
+    const c = m.reached ? 0x7ee0a6 : 0xf4f3f1;
+    u.bead.material.color.setHex(c); u.halo.material.color.setHex(c); u.ring.material.color.setHex(c); u.drop.material.color.setHex(c);
+    u.halo.scale.setScalar(1 + Math.sin(t * 2 + m.mc) * .12);
+  }
+  tipAt(MOON_MC, ends.base, moonPos); moonGroup.position.copy(moonPos);
+  moon.rotation.y = t * .02; moonGlow.material.opacity = .75 + Math.sin(t * .8) * .1;
+};
+
 // Idle: a little bob, the occasional slow blink, sleeves twitching. No skeleton needed.
 const blinkAt = t => { if (SHOT) return 0; const c = t % 4.7; return c < .3 ? Math.sin(c / .3 * Math.PI) : 0; };
 const idle = t => {
@@ -350,7 +423,7 @@ const idle = t => {
 // Camera framing: fit a bounding sphere around the frog and both ends of the member into the narrower half-angle of the
 // frustum (vertical on desktop, horizontal on phones), with a margin. Whatever the size or rotation, the tip stays on screen.
 const FROG = [[-1.45, 0, -1.3], [1.45, 3.15, 1.3]].map(a => new THREE.Vector3(...a));
-const fitPts = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+const fitPts = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
 const fitBox = new THREE.Box3(), fitC = new THREE.Vector3(), fitTarget = new THREE.Vector3();
 let shadowSpan = 18;
 // User zoom on top of the auto framing: wheel / trackpad, pinch on touch, double-click to reset.
@@ -370,6 +443,7 @@ const frame = () => {
     camera.lookAt(controls.target); rim.target.position.copy(controls.target); return;
   }
   fitPts[0].copy(FROG[0]); fitPts[1].copy(FROG[1]); fitPts[2].copy(ends.base); fitPts[3].copy(ends.tip);
+  const next = milestones.find(m => !m.reached); fitPts[4].copy(next ? next.pos : ends.tip);
   fitBox.setFromPoints(fitPts); fitBox.getCenter(fitC);
   let R = 0; for (const p of fitPts) R = Math.max(R, p.distanceTo(fitC));
   // the box corners, not just its extremes, must fit: use the half-diagonal
@@ -396,6 +470,21 @@ const mk = (n, a) => { const e = document.createElementNS(NS, n); for (const k i
 const rl = {line: mk('line', {}), a: mk('line', {class: 'drop'}), b: mk('line', {class: 'drop'}), t: mk('text', {'text-anchor': 'middle'})};
 svg.append(rl.line, rl.a, rl.b, rl.t);
 const project = (v, out) => { out.copy(v).project(camera); return {x: (out.x + 1) / 2 * innerWidth, y: (1 - out.y) / 2 * innerHeight}; };
+const marksSvg = $('#marks');
+const markLabels = milestones.map(m => { const t = mk('text', {'text-anchor': 'middle'}); t.textContent = m.label; marksSvg.append(t); return t; });
+const paintMarks = () => {
+  if (!ready) { marksSvg.style.opacity = 0; return; }
+  marksSvg.style.opacity = 1;
+  const v = new THREE.Vector3();
+  milestones.forEach((m, i) => {
+    const t = markLabels[i];
+    v.copy(m.pos); v.y += .32; pivot.localToWorld(v); v.project(camera);
+    const behind = v.z > 1, x = (v.x + 1) / 2 * innerWidth, y = (1 - v.y) / 2 * innerHeight;
+    t.style.display = behind ? 'none' : '';
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.setAttribute('class', m.reached ? 'hit' : (m === milestones.find(q => !q.reached) ? 'next' : ''));
+  });
+};
 const paintRule = () => {
   if (!ready || shownCm <= 0) { svg.style.opacity = 0; return; }
   const p0 = project(pivot.localToWorld(ends.base.clone()), new THREE.Vector3()), p1 = project(pivot.localToWorld(ends.tip.clone()), new THREE.Vector3());
@@ -416,9 +505,9 @@ const loop = () => {
   shownCm += (targetCm - shownCm) * Math.min(1, dt * 1.8);
   idle(t);
   scene.updateMatrixWorld();
-  updateMember(t); frame(); controls.update();
+  updateMember(t); updateMilestones(t); frame(); controls.update();
   renderer.render(scene, camera);
-  paintRule();
+  paintRule(); paintMarks();
   requestAnimationFrame(loop);
 };
 
