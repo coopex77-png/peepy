@@ -463,31 +463,8 @@ const hitOnScreen = (a, b, px = 34, depthTol = 4) => {
   return Math.hypot(dx, dy) < px && Math.abs(a.distanceTo(camera.position) - b.distanceTo(camera.position)) < depthTol;
 };
 
-// Things within reach: a handful of drifting orbs around the frog, always inside the swing radius. Smack one and it
-// bursts, then reappears somewhere else. They re-scatter when the member has grown or shrunk a lot.
-const ORB_N = 6, orbs = [], orbMat = new THREE.MeshStandardMaterial({color: 0x9ff0c0, emissive: 0x1f6b44, emissiveIntensity: 1.2, roughness: .25, metalness: 0, transparent: true, opacity: .92});
-let orbL = 0;
-const placeOrb = o => {
-  const L = Math.max(1.6, shownCm * CM), a = (Math.random() - .5) * 2.4, pitch = -.3 + Math.random() * 1.0, rad = L * (.45 + Math.random() * .5);
-  const d = DIR.clone().applyAxisAngle(X_AXIS, -pitch).applyAxisAngle(Y_AXIS, a);
-  o.userData.home = ends.base.clone().addScaledVector(d, rad); o.userData.home.y = Math.max(.45, o.userData.home.y);
-  o.userData.phase = Math.random() * 6.28; o.userData.dead = 0; o.visible = true; o.scale.setScalar(1);
-};
-for (let i = 0; i < ORB_N; i++) { const o = new THREE.Mesh(new THREE.SphereGeometry(.17, 16, 12), orbMat); o.castShadow = true; o.userData = {home: new THREE.Vector3(), phase: 0, dead: 0}; pivot.add(o); orbs.push(o); }
-const updateOrbs = (t, dt) => {
-  const L = Math.max(1.6, shownCm * CM);
-  if (!orbL || Math.abs(L - orbL) / orbL > .3) { orbL = L; for (const o of orbs) placeOrb(o); }
-  for (const o of orbs) {
-    const u = o.userData;
-    if (u.dead > 0) { u.dead -= dt; if (u.dead <= 0) placeOrb(o); continue; }
-    o.position.copy(u.home); o.position.y += Math.sin(t * 1.3 + u.phase) * .1; o.position.x += Math.cos(t * .9 + u.phase) * .05;
-    o.scale.setScalar(1 + Math.sin(t * 2.2 + u.phase) * .06);
-    if (swinging() && tipVel.length() > 2.5 && hitOnScreen(ends.tip, o.position)) {
-      u.dead = 1.4 + Math.random(); o.visible = false; smacks.count++;
-      burstAt(o.position, 0x9ff0c0); pushLog(`smack <b>· ${smacks.count}</b>`);
-    }
-  }
-  // the floor: a fast downward hit leaves a ring in the dust
+// The floor: a fast downward hit leaves a ring in the dust.
+const updateFloorHit = dt => {
   smacks.floorCool = Math.max(0, smacks.floorCool - dt);
   if (swinging() && !smacks.floorCool && ends.tip.y < .35 && tipVel.y < -3) { smacks.floorCool = .5; burstAt(ends.tip, 0x8b8b93, true); }
 };
@@ -613,7 +590,7 @@ const loop = () => {
   shownCm += (targetCm - shownCm) * Math.min(1, dt * 1.8);
   idle(t);
   scene.updateMatrixWorld();
-  swing(dt); updateMember(t, dt); updateMilestones(t); updateOrbs(t, dt); tickBursts(dt); frame(); controls.update();
+  swing(dt); updateMember(t, dt); updateMilestones(t); updateFloorHit(dt); tickBursts(dt); frame(); controls.update();
   renderer.render(scene, camera);
   paintRule(); paintMarks();
   requestAnimationFrame(loop);
@@ -730,7 +707,7 @@ const start = () => {
   if (DEMO || PREVIEW) { tick(); }
   else { poll(); document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(0); }); }
   pushLog(PREVIEW ? 'preview mode' : 'measurement started');
-  setTimeout(() => pushLog('grab it. swing it. smack the orbs.'), 1500);
+  setTimeout(() => pushLog('grab it. swing it.'), 1500);
 };
 if (CFG.model) {
   // Optional real model. Grounded and centred; the member attaches at CFG.modelAnchor.
