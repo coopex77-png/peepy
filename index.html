@@ -327,22 +327,69 @@ const tipAt = (mc, base, out) => {                       // where the tip sits a
 };
 const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3());
 const ends = {base: new THREE.Vector3(), tip: new THREE.Vector3()}, tmp = new THREE.Vector3();
-const updateMember = t => {
+/* ---------- play with it ---------- */
+// Grab the member and swing it. Yaw/pitch offsets from the rest direction ride on an underdamped spring, so it
+// wobbles back when let go; a fast release keeps its momentum. Pointer capture happens before OrbitControls sees
+// the event, so grabbing it doesn't also spin the camera.
+const sw = {yaw: 0, pitch: 0, vy: 0, vp: 0, drag: false, last: 0};
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), aimHit = new THREE.Vector3(), aimSphere = new THREE.Sphere();
+const Y_AXIS = new THREE.Vector3(0, 1, 0), X_AXIS = new THREE.Vector3(1, 0, 0);
+const wrapPi = a => Math.atan2(Math.sin(a), Math.cos(a));
+const castPointer = e => { ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); };
+const overMember = () => ready && shownCm > 0 && ray.intersectObjects([shaft, tip], false).length > 0;
+const aimFromPointer = () => {                            // pointer ray ∩ sphere(base, L) → wanted direction → yaw/pitch
+  const L = Math.max(.6, shownCm * CM);
+  aimSphere.set(pivot.localToWorld(ends.base.clone()), L);
+  if (!ray.ray.intersectSphere(aimSphere, aimHit)) ray.ray.closestPointToPoint(aimSphere.center, aimHit);
+  const d = aimHit.sub(aimSphere.center).normalize();
+  return {yaw: wrapPi(Math.atan2(d.x, d.z)), pitch: THREE.MathUtils.clamp(Math.asin(THREE.MathUtils.clamp(d.y, -1, 1)) - Math.asin(DIR.y), -1.25, 1.15)};
+};
+canvas.addEventListener('pointerdown', e => {
+  castPointer(e);
+  if (!overMember()) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  sw.drag = true; sw.last = performance.now(); controls.enabled = false; canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing';
+}, {capture: true});
+canvas.addEventListener('pointermove', e => {
+  castPointer(e);
+  if (sw.drag) {
+    const a = aimFromPointer(), now = performance.now(), dt = Math.max(8, now - sw.last) / 1000; sw.last = now;
+    sw.vy = THREE.MathUtils.lerp(sw.vy, wrapPi(a.yaw - sw.yaw) / dt, .45); sw.vp = THREE.MathUtils.lerp(sw.vp, (a.pitch - sw.pitch) / dt, .45);
+    sw.yaw = a.yaw; sw.pitch = a.pitch;
+  } else canvas.style.cursor = overMember() ? 'grab' : '';
+});
+const release = e => { if (!sw.drag) return; sw.drag = false; controls.enabled = true; canvas.style.cursor = ''; try { canvas.releasePointerCapture(e.pointerId); } catch (_) {} };
+canvas.addEventListener('pointerup', release); canvas.addEventListener('pointercancel', release);
+const swing = dt => {                                     // spring back to rest, underdamped
+  if (sw.drag) return;
+  const k = 42, c = 4.6;
+  sw.vy += (-k * sw.yaw - c * sw.vy) * dt; sw.vp += (-k * sw.pitch - c * sw.vp) * dt;
+  sw.yaw += sw.vy * dt; sw.pitch += sw.vp * dt;
+  sw.vy = THREE.MathUtils.clamp(sw.vy, -40, 40); sw.vp = THREE.MathUtils.clamp(sw.vp, -40, 40);
+};
+
+const dirNow = new THREE.Vector3(), lateral = new THREE.Vector3(), upNow = new THREE.Vector3(), prevTip = new THREE.Vector3(), tipVel = new THREE.Vector3();
+const updateMember = (t, dt) => {
   if (!ready) return;
   const b = pivot.worldToLocal(rig.anchor.getWorldPosition(tmp)).clone();
   const L = shownCm * CM, r = .07 + Math.min(.16, L * .035);
   const bounce = Math.sin(t * 8.4) * .03 * Math.min(L, 4);
-  const dir = new THREE.Vector3(0, .55, 1).normalize();     // out the front and up
-  const sag = Math.pow(L, 1.25) * .05 + bounce;
-  const end = b.clone().addScaledVector(dir, L); end.y -= sag;
+  dirNow.copy(DIR).applyAxisAngle(X_AXIS, -sw.pitch).applyAxisAngle(Y_AXIS, sw.yaw);
+  const sag = (Math.pow(L, 1.25) * .05 + bounce) * Math.max(.25, 1 - Math.max(0, sw.pitch));
+  const end = b.clone().addScaledVector(dirNow, L); end.y -= sag;
   if (end.y < ground + r) end.y = ground + r;
-  const mid = b.clone().addScaledVector(dir, L * .5); mid.y -= sag * .2;
+  // the whip: the middle lags behind the swing, opposite to the angular velocity
+  lateral.crossVectors(Y_AXIS, dirNow).normalize(); upNow.crossVectors(dirNow, lateral).normalize();
+  const mid = b.clone().addScaledVector(dirNow, L * .5); mid.y -= sag * .2;
+  const bend = Math.min(L * .3, Math.hypot(sw.vy, sw.vp) * L * .05);
+  if (bend > 1e-4) { const ang = Math.atan2(sw.vp, sw.vy); mid.addScaledVector(lateral, -Math.cos(ang) * bend).addScaledVector(upNow, -Math.sin(ang) * bend); }
   curve.v0.copy(b); curve.v1.copy(mid); curve.v2.copy(end);
   shaft.geometry.dispose();
   shaft.geometry = new THREE.TubeGeometry(curve, Math.max(8, Math.min(56, Math.round(L * 12))), r, 14, false);
   tip.position.copy(end); tip.scale.setScalar(r * 1.26);
   tip.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), curve.getTangent(1)); tip.scale.y = r * 1.5;
   sheath.position.copy(b); sheath.scale.set(r * 1.5, r * 1.3, r * 1.7);
+  if (dt > 0) tipVel.copy(end).sub(prevTip).divideScalar(dt); prevTip.copy(end);
   ends.base.copy(b); ends.tip.copy(end);
 };
 
@@ -390,6 +437,60 @@ const moonGlow = (() => {
 const moonGroup = new THREE.Group(); moonGroup.add(moon, moonGlow); pivot.add(moonGroup);
 const moonPos = new THREE.Vector3();
 
+// Smack: an expanding ring at the point of impact, the target flinches, a line in the log.
+const bursts = [];
+const burstAt = (pos, color, flat = false) => {
+  const m = new THREE.Mesh(new THREE.RingGeometry(.2, .3, 40), new THREE.MeshBasicMaterial({color, transparent: true, opacity: .9, side: THREE.DoubleSide, depthWrite: false}));
+  m.position.copy(pos); if (flat) { m.rotation.x = -Math.PI / 2; m.position.y = .01; } else m.lookAt(camera.position);
+  pivot.add(m); bursts.push({m, age: 0, flat});
+};
+const tickBursts = dt => {
+  for (let i = bursts.length - 1; i >= 0; i--) {
+    const b = bursts[i]; b.age += dt; const k = b.age / .55;
+    b.m.scale.setScalar(1 + k * 6); b.m.material.opacity = .9 * (1 - k); if (!b.flat) b.m.lookAt(camera.position);
+    if (k >= 1) { pivot.remove(b.m); b.m.geometry.dispose(); b.m.material.dispose(); bursts.splice(i, 1); }
+  }
+};
+const smacks = {moonKick: 0, moonSpin: 0, floorCool: 0, count: 0};
+const swinging = () => Math.hypot(sw.vy, sw.vp) > 2;      // hits only count when the user is actually swinging it, not while it grows
+// Hits are judged on screen, the way the player sees them: the tip's projected position within a few pixels of the
+// target's, and the two not wildly apart in depth. Pure 3D distance would miss almost everything you clearly whacked.
+const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
+const hitOnScreen = (a, b, px = 34, depthTol = 4) => {
+  _pa.copy(a).project(camera); _pb.copy(b).project(camera);
+  if (_pa.z > 1 || _pb.z > 1) return false;
+  const dx = (_pa.x - _pb.x) * innerWidth / 2, dy = (_pa.y - _pb.y) * innerHeight / 2;
+  return Math.hypot(dx, dy) < px && Math.abs(a.distanceTo(camera.position) - b.distanceTo(camera.position)) < depthTol;
+};
+
+// Things within reach: a handful of drifting orbs around the frog, always inside the swing radius. Smack one and it
+// bursts, then reappears somewhere else. They re-scatter when the member has grown or shrunk a lot.
+const ORB_N = 6, orbs = [], orbMat = new THREE.MeshStandardMaterial({color: 0x9ff0c0, emissive: 0x1f6b44, emissiveIntensity: 1.2, roughness: .25, metalness: 0, transparent: true, opacity: .92});
+let orbL = 0;
+const placeOrb = o => {
+  const L = Math.max(1.6, shownCm * CM), a = (Math.random() - .5) * 2.4, pitch = -.3 + Math.random() * 1.0, rad = L * (.45 + Math.random() * .5);
+  const d = DIR.clone().applyAxisAngle(X_AXIS, -pitch).applyAxisAngle(Y_AXIS, a);
+  o.userData.home = ends.base.clone().addScaledVector(d, rad); o.userData.home.y = Math.max(.45, o.userData.home.y);
+  o.userData.phase = Math.random() * 6.28; o.userData.dead = 0; o.visible = true; o.scale.setScalar(1);
+};
+for (let i = 0; i < ORB_N; i++) { const o = new THREE.Mesh(new THREE.SphereGeometry(.17, 16, 12), orbMat); o.castShadow = true; o.userData = {home: new THREE.Vector3(), phase: 0, dead: 0}; pivot.add(o); orbs.push(o); }
+const updateOrbs = (t, dt) => {
+  const L = Math.max(1.6, shownCm * CM);
+  if (!orbL || Math.abs(L - orbL) / orbL > .3) { orbL = L; for (const o of orbs) placeOrb(o); }
+  for (const o of orbs) {
+    const u = o.userData;
+    if (u.dead > 0) { u.dead -= dt; if (u.dead <= 0) placeOrb(o); continue; }
+    o.position.copy(u.home); o.position.y += Math.sin(t * 1.3 + u.phase) * .1; o.position.x += Math.cos(t * .9 + u.phase) * .05;
+    o.scale.setScalar(1 + Math.sin(t * 2.2 + u.phase) * .06);
+    if (swinging() && tipVel.length() > 2.5 && hitOnScreen(ends.tip, o.position)) {
+      u.dead = 1.4 + Math.random(); o.visible = false; smacks.count++;
+      burstAt(o.position, 0x9ff0c0); pushLog(`smack <b>· ${smacks.count}</b>`);
+    }
+  }
+  // the floor: a fast downward hit leaves a ring in the dust
+  smacks.floorCool = Math.max(0, smacks.floorCool - dt);
+  if (swinging() && !smacks.floorCool && ends.tip.y < .35 && tipVel.y < -3) { smacks.floorCool = .5; burstAt(ends.tip, 0x8b8b93, true); }
+};
 const updateMilestones = t => {
   if (!ready) return;
   const mcNow = state.mc || (PREVIEW ? demoMc : (+CFG.placeholderMc || 6000));
@@ -402,10 +503,17 @@ const updateMilestones = t => {
     m.reached = mcNow >= m.mc;
     const c = m.reached ? 0x7ee0a6 : 0xf4f3f1;
     u.bead.material.color.setHex(c); u.halo.material.color.setHex(c); u.ring.material.color.setHex(c); u.drop.material.color.setHex(c);
-    u.halo.scale.setScalar(1 + Math.sin(t * 2 + m.mc) * .12);
+    // hit test: tip close and moving fast, with a short cooldown per target
+    m.cool = Math.max(0, (m.cool || 0) - 1 / 60); m.kick = (m.kick || 0) * .9;
+    if (swinging() && !m.cool && tipVel.length() > 2.5 && hitOnScreen(ends.tip, m.pos, 30, 6)) { m.cool = .6; m.kick = 1; burstAt(m.pos, c); pushLog(`smacked <b>${m.label}</b>`); }
+    u.bead.scale.setScalar(1 + m.kick * 1.6); u.halo.scale.multiplyScalar(1 + m.kick * .8);
   }
   tipAt(MOON_MC, ends.base, moonPos); moonGroup.position.copy(moonPos);
-  moon.rotation.y = t * .02; moonGlow.material.opacity = .75 + Math.sin(t * .8) * .1;
+  smacks.moonCool = Math.max(0, (smacks.moonCool || 0) - 1 / 60);
+  if (swinging() && !smacks.moonCool && tipVel.length() > 2.5 && hitOnScreen(ends.tip, moonPos, 60, 12)) { smacks.moonCool = .8; smacks.moonKick = 1; smacks.moonSpin += tipVel.length() * .02; burstAt(ends.tip, 0xfff6dc); pushLog('smacked <b>the moon</b>'); }
+  smacks.moonKick *= .92; smacks.moonSpin *= .985;
+  moon.rotation.y = t * .02 + smacks.moonSpin; moon.rotation.x = Math.sin(t * 9) * smacks.moonKick * .25;
+  moonGroup.scale.setScalar(1 + smacks.moonKick * .12); moonGlow.material.opacity = .75 + Math.sin(t * .8) * .1 + smacks.moonKick * .3;
 };
 
 // Idle: a little bob, the occasional slow blink, sleeves twitching. No skeleton needed.
@@ -505,7 +613,7 @@ const loop = () => {
   shownCm += (targetCm - shownCm) * Math.min(1, dt * 1.8);
   idle(t);
   scene.updateMatrixWorld();
-  updateMember(t); updateMilestones(t); frame(); controls.update();
+  swing(dt); updateMember(t, dt); updateMilestones(t); updateOrbs(t, dt); tickBursts(dt); frame(); controls.update();
   renderer.render(scene, camera);
   paintRule(); paintMarks();
   requestAnimationFrame(loop);
@@ -622,6 +730,7 @@ const start = () => {
   if (DEMO || PREVIEW) { tick(); }
   else { poll(); document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(0); }); }
   pushLog(PREVIEW ? 'preview mode' : 'measurement started');
+  setTimeout(() => pushLog('grab it. swing it. smack the orbs.'), 1500);
 };
 if (CFG.model) {
   // Optional real model. Grounded and centred; the member attaches at CFG.modelAnchor.
